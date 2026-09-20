@@ -3,7 +3,7 @@ name: Build macOS app
 on:
   workflow_dispatch:
   push:
-    branches: [paste-image]
+    branches: [main]
     paths:
       - "macos/**"
       - "src/**"
