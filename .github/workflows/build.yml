@@ -4,6 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches: [paste-image]
+    paths:
+      - "macos/**"
+      - "src/**"
+      - "build.zig"
+      - "build.zig.zon"
+      - ".github/workflows/build.yml"
 
 jobs:
   build-macos:
