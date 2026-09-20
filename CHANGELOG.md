@@ -6,6 +6,8 @@
 
 ### 变更
 
+- **main 分支保护：只能通过 PR 提交并通过 CI（build-macos）后自动合并**。为什么改：用户要求锁定 main，杜绝直接 push，所有变更走 PR + CI 门禁。改了什么：①分支保护规则（required check = build-macos、strict 最新要求、enforce_admins 对管理员同样生效、禁 force push 与删除）；②仓库开启 allow_auto_merge；③同步移除 `build.yml` 的 paths 过滤——否则纯文档 PR 不触发 CI、required check 永不出现，PR 无法满足合并条件；④Release `v1.3.1-paste.1` 转为预发布。
+
 - **断开与上游的 fork 关系，转为独立分叉仓库自主维护**。为什么改：用户决定本仓库长期自主演进、不再跟随上游同步（与 pi 同模式）。改了什么：①GitHub 侧仓库已是独立仓库状态（`fork: false`、无 parent）；②`main` 分支重置到补丁线顶端（v1.3.1 + 补丁 + 文档，丢弃 fork 时携带的上游 main 快照）；③删除 7 个上游遗留远程分支（1.1.x、1.2.x、1.3.x、offset-audit、push-tuwykoykluyz、setneedle-crash、tristan957/gtk-ng）；④仓库描述改为独立 fork 说明；⑤`MEMO.md` M1 从「上游发版 rebase」改写为「自主判断、手动移植上游重要改进」。
 
 ## v1.3.1-paste.1（2026-09-20）
