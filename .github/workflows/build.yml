@@ -20,7 +20,7 @@ jobs:
 
       - name: Install Zig 0.15.2
         run: |
-          curl -L https://ziglang.org/download/0.15.2/zig-macos-aarch64-0.15.2.tar.xz -o /tmp/zig.tar.xz
+          curl -L https://ziglang.org/download/0.15.2/zig-aarch64-macos-0.15.2.tar.xz -o /tmp/zig.tar.xz
           mkdir -p "$HOME/zig"
           tar -xJf /tmp/zig.tar.xz -C "$HOME/zig" --strip-components=1
           echo "$HOME/zig" >> "$GITHUB_PATH"
