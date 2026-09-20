@@ -36,6 +36,8 @@ extension NSPasteboard {
     /// Does these things in order:
     /// - Tries to get the absolute filesystem path of the file in the pasteboard if there is one and ensures the file path is properly escaped.
     /// - Tries to get any string from the pasteboard.
+    /// - Tries to get image data from the pasteboard (e.g. screenshots captured to
+    ///   clipboard), writes it to a temp file, and returns the escaped path.
     /// If all of the above fail, returns None.
     func getOpinionatedStringContents() -> String? {
         if let urls = readObjects(forClasses: [NSURL.self]) as? [URL],
@@ -45,7 +47,36 @@ extension NSPasteboard {
                 .joined(separator: " ")
         }
 
-        return self.string(forType: .string)
+        if let str = self.string(forType: .string), !str.isEmpty {
+            return str
+        }
+
+        // Fallback: image-only clipboard (e.g. macOS screenshot to clipboard via
+        // Cmd+Shift+Ctrl+4). Write it to a temp file and return the escaped path
+        // so terminal applications can consume it. This runs last so existing
+        // behavior is unchanged: any clipboard that currently pastes text
+        // (URLs, strings) keeps doing so.
+        if let imageData = self.data(forType: .png) ?? self.data(forType: .tiff) {
+            let fileName = "ghostty-paste-\(UUID().uuidString).png"
+            let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
+            do {
+                // If we got TIFF data, convert to PNG for broader compatibility
+                if self.data(forType: .png) == nil,
+                   let tiffImage = NSImage(data: imageData),
+                   let tiffData = tiffImage.tiffRepresentation,
+                   let bitmap = NSBitmapImageRep(data: tiffData),
+                   let pngData = bitmap.representation(using: .png, properties: [:]) {
+                    try pngData.write(to: tempURL)
+                } else {
+                    try imageData.write(to: tempURL)
+                }
+                return Ghostty.Shell.escape(tempURL.path)
+            } catch {
+                // Fall through: paste nothing on failure, matching prior behavior
+            }
+        }
+
+        return nil
     }
 
     /// The pasteboard for the Ghostty enum type.

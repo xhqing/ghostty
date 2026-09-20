@@ -1,0 +1,75 @@
+name: Build macOS app
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [paste-image]
+
+jobs:
+  build-macos:
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Install Zig 0.15.2
+        run: |
+          curl -L https://ziglang.org/download/0.15.2/zig-macos-aarch64-0.15.2.tar.xz -o /tmp/zig.tar.xz
+          mkdir -p "$HOME/zig"
+          tar -xJf /tmp/zig.tar.xz -C "$HOME/zig" --strip-components=1
+          echo "$HOME/zig" >> "$GITHUB_PATH"
+          "$HOME/zig/zig" version
+
+      - name: Setup Sparkle
+        env:
+          SPARKLE_VERSION: 2.9.6
+        run: |
+          mkdir -p .action/sparkle
+          cd .action/sparkle
+          curl -L https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-for-Swift-Package-Manager.zip > sparkle.zip
+          unzip sparkle.zip
+          echo "$(pwd)/bin" >> "$GITHUB_PATH"
+
+      - name: Build GhosttyKit
+        run: |
+          zig build \
+            -Doptimize=ReleaseFast \
+            -Demit-macos-app=false \
+            -Dversion-string=1.3.1
+
+      - name: Build Ghostty.app
+        run: |
+          cd macos
+          xcodebuild -target Ghostty -configuration Release \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+
+      - name: Ad-hoc codesign
+        run: |
+          /usr/bin/codesign --verbose --force --deep --sign - \
+            --entitlements macos/Ghostty.entitlements \
+            "macos/build/Release/Ghostty.app"
+
+      - name: Update Info.plist
+        run: |
+          GHOSTTY_COMMIT=$(git rev-parse --short HEAD)
+          GHOSTTY_BUILD=$(git rev-list --count HEAD)
+          /usr/libexec/PlistBuddy -c "Set :GhosttyCommit $GHOSTTY_COMMIT" "macos/build/Release/Ghostty.app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GHOSTTY_BUILD" "macos/build/Release/Ghostty.app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.3.1" "macos/build/Release/Ghostty.app/Contents/Info.plist"
+
+      - name: Zip
+        run: |
+          cd macos/build/Release
+          zip -9 -r --symlinks ../../../Ghostty.app.zip Ghostty.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ghostty-app
+          path: Ghostty.app.zip
