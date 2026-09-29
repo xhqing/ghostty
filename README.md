@@ -20,7 +20,7 @@
 </p>
 <p align="center">
   <a href="./LICENSE.md"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" /></a>
-  <a href="https://github.com/xhqing/ghostty/releases"><img alt="Version" src="https://img.shields.io/badge/Version-1.3.1--paste.1-blue?style=flat-square" /></a>
+  <a href="https://github.com/xhqing/ghostty/releases"><img alt="Version" src="https://img.shields.io/badge/Version-1.3.1--paste.2-blue?style=flat-square" /></a>
   <img alt="Type: Project" src="https://img.shields.io/badge/Type-Project-lightgrey?style=flat-square" />
 </p>
 
