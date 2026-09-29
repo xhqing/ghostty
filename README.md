@@ -18,6 +18,19 @@
     <a href="HACKING.md">Developing</a>
   </p>
 </p>
+<p align="center">
+  <a href="./LICENSE.md"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" /></a>
+  <a href="https://github.com/xhqing/ghostty/releases"><img alt="Version" src="https://img.shields.io/badge/Version-1.3.1--paste.1-blue?style=flat-square" /></a>
+  <img alt="Type: Project" src="https://img.shields.io/badge/Type-Project-lightgrey?style=flat-square" />
+</p>
+
+**English** | [简体中文](README_cn.md)
+
+> **This is an independent fork.** It was detached from
+> [ghostty-org/ghostty](https://github.com/ghostty-org/ghostty) on 2026-09-20 and is
+> maintained on its own, without synchronizing with upstream. On top of the v1.3.1
+> baseline it carries one patch: pasting a clipboard image with Cmd+V writes the image
+> to a temporary file and pastes the file path.
 
 ## About
 
@@ -201,3 +214,20 @@ SENTRY_DSN=https://e914ee84fd895c4fe324afa3e53dac76@o4507352570920960.ingest.us.
 > stack memory of each thread at the time of the crash. This information
 > is used to rebuild the stack trace but can also contain sensitive data
 > depending on when the crash occurred.
+
+## License & Attribution
+
+MIT License — see [LICENSE.md](LICENSE.md).
+
+Copyright (c) 2024 Mitchell Hashimoto, Ghostty contributors (original Ghostty project). Copyright (c) 2026 All Contributors (this fork).
+
+Portions of this repository originate from [ghostty-org/ghostty](https://github.com/ghostty-org/ghostty), detached on 2026-09-20; those portions retain their original copyright and MIT notice.
+
+### Attribution
+
+When referencing this project, please attribute it to the project rather than to any individual: include the repository URL (`https://github.com/xhqing/ghostty`) and preserve the copyright notices contained in [LICENSE.md](LICENSE.md).
+
+### Referencing This Project
+
+Repository URL: `https://github.com/xhqing/ghostty`
+
