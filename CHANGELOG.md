@@ -4,6 +4,10 @@
 
 ## 未发布（2026-09-20）
 
+### 新增
+
+- **补齐项目标配（commit skill 第 9 步自动补全）**。为什么改：本仓库此前没有版本权威文件，中英双语文档入口与版权署名段也缺位，`/commit` 的标准检测要求补齐。改了什么：①新建 `VERSION`，取值 `1.3.1-paste.1`（来自本 CHANGELOG 顶部最新实际版本标题）；②把无后缀 `LICENSE` 转建为 `LICENSE.md`——保留上游版权行「Copyright (c) 2024 Mitchell Hashimoto, Ghostty contributors（原 Ghostty 项目）」（MIT 要求保留原版权声明，不得删除），另加一行「Copyright (c) 2026 All Contributors（本分叉）」，冗余的 `LICENSE` 删除；③`README.md` 顶部补 License / Version / Type 三枚静态徽章、中英互链、独立分叉与贴图补丁说明，底部补「License & Attribution」版权署名段；④新建中文版 `README_cn.md`，与英文版逐节对应；⑤新建 `.commit-cache.md`（commit skill 检测缓存）；⑥GitHub About 改为中英双语 description 并补 5 个 topics。
+
 ### 变更
 
 - **main 分支保护：只能通过 PR 提交并通过 CI（build-macos）后自动合并**。为什么改：用户要求锁定 main，杜绝直接 push，所有变更走 PR + CI 门禁。改了什么：①分支保护规则（required check = build-macos、strict 最新要求、enforce_admins 对管理员同样生效、禁 force push 与删除）；②仓库开启 allow_auto_merge；③同步移除 `build.yml` 的 paths 过滤——否则纯文档 PR 不触发 CI、required check 永不出现，PR 无法满足合并条件；④Release `v1.3.1-paste.1` 转为预发布。
