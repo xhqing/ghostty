@@ -2,6 +2,12 @@
 
 本文件记录本仓库的全部变更。仓库已于 2026-09-20 与原上游 `ghostty-org/ghostty` 断开 fork 关系（GitHub `fork: false`），独立分叉自主维护、不自动同步上游；上游自身变更见上游仓库。
 
+## [未发布]
+
+### 变更
+
+- **同步 Atlas 子项目清单（加入 mp4-player）**：为什么改：Atlas 权威源把 mp4-player 登记为新子项目，按超集规则本仓库的随附版（`.claude/CLAUDE.md`）需同步最新全文。改了什么：随附的 FullStackEngineerAgent CLAUDE.md 全文更新——「目前在手项目」与「当前子项目清单」两处加入 mp4-player。
+
 ## v1.3.1-paste.2（2026-09-29）
 
 ### 新增
