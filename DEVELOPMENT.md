@@ -1,4 +1,7 @@
-# Agent Development Guide
+# Development notes
+
+（2026-10-12 由原 AGENTS.md（上游 agent 开发指南）迁入；按新规，非 Agent 项目不再保留 CLAUDE.md / AGENTS.md / .claude 等智能体专属文件。）
+
 
 A file for [guiding coding agents](https://agents.md/).
 
