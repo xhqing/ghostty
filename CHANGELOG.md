@@ -10,7 +10,13 @@
 
 - **同步 Atlas 子项目清单（zcode-cli、cmux-launcher 短期搁置标注）**：为什么改：用户 2026-10-09 决定 zcode-cli 与 cmux-launcher 短期不再维护，Atlas 权威源已作标注。改了什么：随附的 FullStackEngineerAgent CLAUDE.md 全文更新——「目前在手项目」与「当前子项目清单」两处标注两者「自 2026-10-09 起短期搁置」。
 
-## v1.3.1-paste.2（2026-09-29）
+## v1.3.1-paste.3（2026-10-12）
+
+### 变更
+
+- **迁移项目指南到 `DEVELOPMENT.md`，删除智能体专属文件**（2026-10-12 新规）：`.claude/CLAUDE.md` / `AGENTS.md` / `.agents/` 等智能体专属文件与目录不再保留；上游开发指南已迁入普通文档（`DEVELOPMENT.md`）。
+
+
 
 ### 新增
 
