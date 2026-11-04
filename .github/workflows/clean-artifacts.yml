@@ -4,6 +4,11 @@ on:
     # Once a day
     - cron: "0 0 * * *"
   workflow_dispatch:
+
+# 删除 artifact 需要 actions:write；本仓库默认 token 只有 contents: read，缺这条会 403 而失败
+permissions:
+  actions: write
+
 jobs:
   remove-old-artifacts:
     runs-on: ubuntu-latest

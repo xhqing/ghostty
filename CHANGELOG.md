@@ -4,6 +4,10 @@
 
 ## [未发布]
 
+### 修复
+
+- **Clean Artifacts 定时任务失败（每天失败一次、并触发 Run failed 邮件）**：为什么改——该 workflow 用 `c-hive/gha-remove-artifacts` 删除 1 周前的构建产物，删除接口需要 `actions: write` 权限，而本仓库默认 workflow 权限是 `read`（GITHUB_TOKEN 只有 contents / metadata / packages 三项只读）。列表接口在公开仓库上免鉴权也能读，所以「没有可删的产物」的日子里任务能通过；一旦真的有超过 1 周的产物要删，就 403 失败——自 2026-09-28 起第一份构建产物「变老」后，每天必然失败。改了什么——`clean-artifacts.yml` 显式声明 `permissions: actions: write`。验证方式：在分支上用 `workflow_dispatch` 手动触发，确认成功、旧产物被清理。
+
 ### 变更
 
 - **子项目 `.pi` 由软链接改为真实目录 + 资源引用（2026-10-30 全局规则修订）**：为什么改——用户 2026-10-30 修订「智能体专属文件」规则，旧做法把本仓库 `.pi` 整个软链接到 `~/Developer/FullStackEngineerAgent/.pi`，等于把「共享」和「独占」压在同一个符号上：本仓库往 `.pi` 写任何文件都会直接落进 Agent 项目、影响全部兄弟子项目并进它的 git 历史；而 `AGENTS.md` 没有 include 机制，想用复制做超集又必然随 Agent 侧演进而漂移。改了什么——①删除 `.pi → ../FullStackEngineerAgent/.pi` 软链接，改为本仓库自己的**真实目录** `.pi/`；②新增 `.pi/settings.json`，用路径把 Agent 项目的 `extensions` / `skills` / `prompts` / `themes` 四个资源目录引用进来，并保留本地的同名目录（本地新增资源由自动发现处理、不必写进 settings）；③`AGENTS.md → ../FullStackEngineerAgent/AGENTS.md` 软链接保持不变（身份层直接对齐、不做超集）。纪律：本仓库 `.pi/` 只允许**追加**（自己的资源目录、`.pi/APPEND_SYSTEM.md`），不允许重述 / 覆盖基座规则；子项目专属规则用 `APPEND_SYSTEM.md`，不要用 `SYSTEM.md`（后者是整体替换，会把 agent 身份冲掉）。详见全局 `~/.pi/agent/docs/agents-registry.md`「智能体专属文件归属与子项目映射（2026-10-30 修订）」。
