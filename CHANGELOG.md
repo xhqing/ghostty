@@ -4,6 +4,12 @@
 
 ## [未发布]
 
+### 变更（产物改由保留期回收，删除 Clean Artifacts 定时任务）
+
+- **为什么改**：产物（每次构建上传的 30MB `Ghostty.app.zip`）只在两个场景有意义——「不本地编译就能真机验收某个提交」与「发版时取二进制挂 Release」；验证「能不能构建成功」本身不需要产物。但 `upload-artifact` 没有设保留期，默认继承了仓库的 90 天，于是产物按「每次改动两份」堆积（2026-11-05 实测 9 份、276.5MB）。为了不让它们无限涨，才养了 `Clean Artifacts` 这个每日定时任务，而它正是 2026-09-28 起每天失败、每天发一封 Run failed 邮件的那个工作流——「为了收拾产物而维护一个会出故障的定时任务」，因果倒置。用户 2026-11-05 选定方案 A：把回收交给 GitHub 自带的保留期，删掉定时任务。
+- **改了什么**：① `build.yml` 的 `Upload artifact` 步骤加 `retention-days: 7`（产物一周后由 GitHub 自动删除）；② 删除 `.github/workflows/clean-artifacts.yml`（连带上一版刚给它补的 `actions: write` 权限修复一起退场，历史记录仍保留在本文件下方）。
+- **后果与边界**：① 产物保留 7 天，够验收也够发版取材；② 若发版距目标提交的构建超过 7 天，需先手动 `workflow_dispatch` 跑一次构建再下载（发版频率低，可接受）；③ PR 构建仍会上传产物（未改成条件上传），若以后确认从不下载 PR 构建，可再加 `if: github.event_name != 'pull_request'` 减半；④ 已存在的 9 份旧产物不会自动清空到 7 天——它们按创建时的默认保留期（由各自上传时的 90 天计时），到期自然消失后不会再累积。
+
 ### 修复
 
 - **Clean Artifacts 定时任务失败（每天失败一次、并触发 Run failed 邮件）**：为什么改——该 workflow 用 `c-hive/gha-remove-artifacts` 删除 1 周前的构建产物，删除接口需要 `actions: write` 权限，而本仓库默认 workflow 权限是 `read`（GITHUB_TOKEN 只有 contents / metadata / packages 三项只读）。列表接口在公开仓库上免鉴权也能读，所以「没有可删的产物」的日子里任务能通过；一旦真的有超过 1 周的产物要删，就 403 失败——自 2026-09-28 起第一份构建产物「变老」后，每天必然失败。改了什么——`clean-artifacts.yml` 显式声明 `permissions: actions: write`。验证方式：在分支上用 `workflow_dispatch` 手动触发，确认成功、旧产物被清理。

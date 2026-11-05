@@ -78,3 +78,6 @@ jobs:
         with:
           name: Ghostty-app
           path: Ghostty.app.zip
+          # 产物只用来「真机验收某个提交」与「发版时取二进制」，留一周足够；
+          # 过期由 GitHub 自动回收，不再需要每天跑定时清理工作流。
+          retention-days: 7
