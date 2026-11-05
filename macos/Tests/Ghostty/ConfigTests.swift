@@ -17,8 +17,13 @@ struct ConfigTests {
         #expect(config.initialWindow == false)
     }
 
-    @Test func quitAfterLastWindowClosedDefaultsToFalse() throws {
+    @Test func quitAfterLastWindowClosedDefaultsToTrue() throws {
         let config = try TemporaryConfig("")
+        #expect(config.shouldQuitAfterLastWindowClosed == true)
+    }
+
+    @Test func quitAfterLastWindowClosedSetToFalse() throws {
+        let config = try TemporaryConfig("quit-after-last-window-closed = false")
         #expect(config.shouldQuitAfterLastWindowClosed == false)
     }
 

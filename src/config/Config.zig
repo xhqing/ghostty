@@ -2474,14 +2474,18 @@ keybind: Keybinds = .{},
 
 /// Whether or not to quit after the last surface is closed.
 ///
-/// This defaults to `false` on macOS since that is standard behavior for
-/// a macOS application. On Linux, this defaults to `true` since that is
-/// generally expected behavior.
+/// This defaults to `true` on every platform in this fork. Upstream defaults
+/// to `false` on macOS, where staying alive after the last window closes is
+/// the AppKit standard. The fork diverges because a running-but-windowless
+/// Ghostty is indistinguishable from one that still has windows at a glance:
+/// the Dock icon keeps its dot either way, so the only way to know is to check
+/// by hand. Quitting together with the last window removes that dot. Set this
+/// to `false` to get the upstream macOS behavior back.
 ///
 /// On Linux, if this is `true`, Ghostty can delay quitting fully until a
 /// configurable amount of time has passed after the last window is closed.
 /// See the documentation of `quit-after-last-window-closed-delay`.
-@"quit-after-last-window-closed": bool = builtin.os.tag == .linux,
+@"quit-after-last-window-closed": bool = true,
 
 /// Controls how long Ghostty will stay running after the last open surface has
 /// been closed. This only has an effect if `quit-after-last-window-closed` is

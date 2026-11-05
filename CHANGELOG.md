@@ -4,6 +4,12 @@
 
 ## [未发布]
 
+### 变更（关掉最后一个窗口即退出，Dock 图标不再残留小点）
+
+- **为什么改**：macOS 上关掉最后一个 Ghostty 窗口后进程仍驻留，Dock 图标下面一直挂着小点；而「App 在运行」和「还有窗口没关」在小点上看起来完全一样，于是每次关窗都得再核查一遍有没有漏下的窗口，很麻烦（Issue #15）。Ghostty 本来就有开关 `quit-after-last-window-closed`（macOS 侧由 `applicationShouldTerminateAfterLastWindowClosed` 直接返回它），只是默认值写成「仅 Linux 为 `true`」，macOS 默认 `false`——因此这不是缺陷，而是默认行为选择。
+- **改了什么**：① `src/config/Config.zig` 里该开关的默认值由 `builtin.os.tag == .linux` 改为 `true`（两平台一致），文档注释同步说明本分叉为何与上游不同、以及想恢复旧行为如何显式写 `false`；② `macos/Tests/Ghostty/ConfigTests.swift` 把默认值断言由 `false` 改为 `true`，并新增「显式写 `false` 时为 `false`」的用例。
+- **行为边界**：① 关窗口时若有进程在跑，仍先走 `confirm-close-surface` 的关闭确认，不会被静默杀进程；② Quick Terminal 的窗口用 `orderOut` 隐藏、窗口对象一直存在（`releasedWhenClosed="NO"`），已实测这种「只剩一个隐藏窗口」的情形不会阻塞退出判定（用一个最小 AppKit 程序验证：先建一个隐藏窗口、再关掉唯一可见窗口，`applicationShouldTerminateAfterLastWindowClosed` 仍被调用并正常退出）；③ 唯一残留情形是「关掉最后一个普通窗口时 Quick Terminal 正显示着」——那属于「还有窗口可见」，App 不退出，等它收起后也不补退出（收起是隐藏、不是关闭）；④ `quit-after-last-window-closed-delay` 仍只在 Linux 生效，本次不动。
+
 ### 变更（产物改由保留期回收，删除 Clean Artifacts 定时任务）
 
 - **为什么改**：产物（每次构建上传的 30MB `Ghostty.app.zip`）只在两个场景有意义——「不本地编译就能真机验收某个提交」与「发版时取二进制挂 Release」；验证「能不能构建成功」本身不需要产物。但 `upload-artifact` 没有设保留期，默认继承了仓库的 90 天，于是产物按「每次改动两份」堆积（2026-11-05 实测 9 份、276.5MB）。为了不让它们无限涨，才养了 `Clean Artifacts` 这个每日定时任务，而它正是 2026-09-28 起每天失败、每天发一封 Run failed 邮件的那个工作流——「为了收拾产物而维护一个会出故障的定时任务」，因果倒置。用户 2026-11-05 选定方案 A：把回收交给 GitHub 自带的保留期，删掉定时任务。
