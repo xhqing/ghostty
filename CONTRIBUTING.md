@@ -198,3 +198,19 @@ pull request will be accepted with a high degree of certainty.
 > **Pull requests are NOT a place to discuss feature design.** Please do
 > not open a WIP pull request to discuss a feature. Instead, use a discussion
 > and link to your branch.
+
+---
+
+## Copyright and licence of your contribution
+
+**Copyright in your contribution stays with you.** Opening a pull request does not
+transfer ownership to this project or to its maintainer — a transfer of copyright
+would need a written agreement, and a pull request is not one.
+
+By submitting a pull request, you agree that your contribution is licensed to this
+project under the **MIT License**. That is a licence, not an assignment: you keep
+the copyright, and the project gains permission to use, modify and redistribute
+your work under that licence.
+
+If you are not comfortable with this arrangement, open an issue first and we can
+work something else out before you write any code.
