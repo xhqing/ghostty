@@ -141,7 +141,7 @@ SENTRY_DSN=https://e914ee84fd895c4fe324afa3e53dac76@o4507352570920960.ingest.us.
 
 MIT 许可证——见 [LICENSE.md](LICENSE.md)。
 
-Copyright (c) 2024 Mitchell Hashimoto, Ghostty contributors（原 Ghostty 项目）。Copyright (c) 2026 xhqing <https://github.com/xhqing>（本分叉）。
+Copyright (c) 2024 Mitchell Hashimoto, Ghostty contributors（原 Ghostty 项目）。Copyright (c) 2026 xhqing and contributors（本分叉）。
 
 本仓库部分内容源自 [ghostty-org/ghostty](https://github.com/ghostty-org/ghostty)，于 2026-09-20 断开分叉；该部分内容保留原作者版权与 MIT 声明。
 

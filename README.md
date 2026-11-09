@@ -219,7 +219,7 @@ SENTRY_DSN=https://e914ee84fd895c4fe324afa3e53dac76@o4507352570920960.ingest.us.
 
 MIT License — see [LICENSE.md](LICENSE.md).
 
-Copyright (c) 2024 Mitchell Hashimoto, Ghostty contributors (original Ghostty project). Copyright (c) 2026 xhqing <https://github.com/xhqing> (this fork).
+Copyright (c) 2024 Mitchell Hashimoto, Ghostty contributors (original Ghostty project). Copyright (c) 2026 xhqing and contributors (this fork).
 
 Portions of this repository originate from [ghostty-org/ghostty](https://github.com/ghostty-org/ghostty), detached on 2026-09-20; those portions retain their original copyright and MIT notice.
 
