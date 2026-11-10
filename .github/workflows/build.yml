@@ -104,6 +104,13 @@ jobs:
         run: |
           # Sparkle 里嵌套的可执行文件单独签，且不套 App 本体的 entitlements；
           # 最后再签 App 本体。与上游 release 的签名顺序一致。
+          #
+          # 不传 --options runtime（hardened runtime）：它会开 library validation，
+          # 而 library validation 要求被加载的 dylib 与主程序 Team ID 相同。自签证书
+          # 没有 OU 字段、codesign 取不到 Team ID（两边都是 TeamIdentifier=not set），
+          # dyld 仍会以 "mapping process and mapped file have different Team IDs" 拒绝
+          # 加载 Sparkle.framework，App 直接起不来（实测本 PR 前一版构建的产物）。
+          # 这个分叉不做公证，hardened runtime 没有收益；旧 ad-hoc 构建本来也没开。
           FRAMEWORK="macos/build/Release/Ghostty.app/Contents/Frameworks/Sparkle.framework"
           for target in \
             "$FRAMEWORK/Versions/B/XPCServices/Downloader.xpc" \
@@ -112,11 +119,11 @@ jobs:
             "$FRAMEWORK/Versions/B/Updater.app" \
             "$FRAMEWORK" \
             "macos/build/Release/Ghostty.app/Contents/PlugIns/DockTilePlugin.plugin"; do
-            /usr/bin/codesign --verbose --force --options runtime \
+            /usr/bin/codesign --verbose --force \
               --sign "$MACOS_SIGNING_IDENTITY" "$target"
           done
 
-          /usr/bin/codesign --verbose --force --options runtime \
+          /usr/bin/codesign --verbose --force \
             --entitlements macos/Ghostty.entitlements \
             --sign "$MACOS_SIGNING_IDENTITY" \
             "macos/build/Release/Ghostty.app"
