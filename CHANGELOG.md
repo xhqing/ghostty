@@ -15,6 +15,7 @@
 - **为什么改**：本分叉的产物是 ad-hoc 签名，而 macOS TCC 对 ad-hoc 签名的 App 是按签名哈希（cdhash）匹配辅助功能授权的——每次重新构建哈希必变，系统当成「新 App」，之前的授权自动作废（2026-09-22 实测：装上新构建后终端里 `osascript` 直接报 `not allowed to send keystrokes (1002)`，只能 `tccutil reset` + 手工重新授权，Issue #2）。
 - **改了什么**：① `build.yml` 增加证书签名路径：从 secrets 取固定的自签证书（`.p12`）导入一次性 keychain、只对 codesign 策略标记信任、逐个签 Sparkle 的嵌套组件与 App 本体，签完校验签名并打印 designated requirement；构建结束删除 keychain。secrets 不可用时（fork 的 PR）自动回退 ad-hoc，CI 仍能出产物。② 新增 `SIGNING.md` 说明证书用途、secret 名称与「不要随手重建证书」的原因。③ 清理上游遗留的 workflow：`pull_request_target` 的 `vouch-check-pr.yml` / `milestone.yml`、`vouch-*` 系列，以及依赖上游 Namespace runner / Nix / 自有 CDN 与 minisign 的 `release-tag.yml`、`release-tip.yml`、`publish-tag.yml`、`flatpak.yml`、`snap.yml`、`nix.yml`、`test.yml`、`update-colorschemes.yml`——这些在本仓库要么永远跳过、要么只会失败，删掉后仓库只剩 `build.yml` 一条 CI。
 - **边界**：① 自签证书不在 Apple 信任链、也不做公证，Gatekeeper 首次打开仍需手动放行（与 ad-hoc 时相同，非回归）；② 证书一旦投入使用不要重建——换证书等于换签名身份，所有机器要重新授权一轮；③ 本分支的构建即配对测试：`codesign -dv` 应显示证书身份（`Authority=Ghostty Fork Self-Signed`）而不是 `Signature=adhoc`，辅助功能授权跨版本持续在下一个 Release 安装后复测。
+- **补充修复（同一版内）**：证书签名路径不加 `--options runtime`（hardened runtime）。hardened runtime 会启用 library validation，它要求被加载的 dylib 与主程序 Team ID 相同；自签证书没有 OU 字段，两边都是 `TeamIdentifier=not set`，dyld 仍报 `mapping process and mapped file have different Team IDs` 拒绝加载 `Sparkle.framework`，App 直接起不来（已用该构建的产物实测复现并验证去掉后恢复正常）。本分叉不做公证，hardened runtime 没有收益，旧 ad-hoc 构建本来也没开。
 
 ## v1.3.1-paste.4（2026-11-05）
 
