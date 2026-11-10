@@ -1,12 +1,12 @@
 # ghostty
 
-> FullStackEngineerAgent（Atlas）名下的子项目 · 本项目规则本体
+> dev-agent（Atlas）名下的子项目 · 本项目规则本体
 
 Ghostty 终端的**自建分叉仓库**（2026-09-20 起与上游断开 fork、自主演进）。当前基线为 v1.3.1 + 「Cmd+V 粘贴剪贴板图片为临时文件路径」补丁；macOS 应用由 GitHub Actions 云构建。
 
 ## 归谁负责
 
-本项目由 **Atlas**（FullStackEngineerAgent）负责维护。改动范围跨出本项目时，先向 Atlas 说明，不自行扩张改动面。
+本项目由 **Atlas**（dev-agent）负责维护。改动范围跨出本项目时，先向 Atlas 说明，不自行扩张改动面。
 
 ## 你的角色
 
