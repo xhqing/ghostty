@@ -67,9 +67,17 @@ EOF
 
 openssl req -x509 -newkey rsa:2048 -sha256 -days 3650 -nodes \
   -keyout key.pem -out cert.pem -config cert.cnf
-openssl pkcs12 -export -inkey key.pem -in cert.pem \
+openssl pkcs12 -export -legacy -inkey key.pem -in cert.pem \
   -name "Ghostty Fork Self-Signed" -out ghostty-selfsigned.p12
 ```
+
+`-legacy` is required: macOS `security import` only understands the legacy
+PKCS#12 algorithms (3DES / SHA-1). OpenSSL 3 and later default to
+AES-256-CBC + PBKDF2, which makes the import fail with
+`MAC verification failed during PKCS12 import (wrong password?)` — even though
+the password is correct. After exporting, verify locally with
+`security import <p12> -k <temp keychain> -P <password>`: it must print
+`1 identity imported.`
 
 Keep the `.p12` and its password in the maintainer's private backup as well —
 GitHub secrets must not be the only copy.
