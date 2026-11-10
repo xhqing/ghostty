@@ -2,6 +2,14 @@
 
 本文件记录本仓库的全部变更。仓库已于 2026-09-20 与原上游 `ghostty-org/ghostty` 断开 fork 关系（GitHub `fork: false`），独立分叉自主维护、不自动同步上游；上游自身变更见上游仓库。
 
+## [Unreleased]
+
+### 新增（默认外观编进二进制：装好即用，默认值不再来自可被外部改写的文件）
+
+- **为什么改**：Ghostty 的配置全部来自磁盘文件，换机器或重装后终端外观要手工重建；而且任何能写 `~/.config/ghostty/config` 的程序都能顺手改掉这些默认值（cmux 读同一份文件时就发生过互相影响，见 Issue #24 与 xhqing/cmux#70）。
+- **改了什么**：① 新增 `src/config/config-builtin.ghostty`（9 项外观默认值：主题、字体、字号、光标、shell 集成），由 `Config.loadDefaultFiles()` 在最开头用 `@embedFile` 加载——它是优先级最低的一层，任何用户配置文件（XDG / App Support）都在它之后加载、天然覆盖；`config-default-files = false` 时这一层与用户配置一起被丢弃，语义不变。② 内置配置只放与机器无关的值：窗口尺寸 / 位置和所有 `keybind`（快速终端的 `global:` 热键、`super+v` 贴图补丁）继续留给用户配置文件。③ 新增 Zig 单测：内置文件必须能解析、且后加载的用户配置覆盖它。
+- **边界**：① `theme = GitHub Dark Default` 依赖随 App 打包的主题目录（`Contents/Resources/ghostty/themes`，`emit-themes` 默认为 true，无需额外打包）；② 从未创建过配置文件的机器首次启动仍会生成注释模板（原有行为），内置值在模板之上生效。
+
 ## v1.3.1-paste.4（2026-11-05）
 
 ### 变更（关掉最后一个窗口即退出，Dock 图标不再残留小点）

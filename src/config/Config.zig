@@ -3946,6 +3946,37 @@ test "handle bom in config files" {
     }
 }
 
+test "builtin config loads and is overridden by user config" {
+    const testing = std.testing;
+    const alloc = testing.allocator;
+
+    var cfg = try Config.default(alloc);
+    defer cfg.deinit();
+
+    // This mirrors the order used by loadDefaultFiles: the embedded config
+    // goes first, then the user files.
+    {
+        var reader: std.Io.Reader = .fixed(@embedFile("./config-builtin.ghostty"));
+        try cfg.loadReader(alloc, &reader, "/builtin/config");
+    }
+
+    // The embedded file must parse cleanly, otherwise every start of
+    // Ghostty would show config errors.
+    try testing.expect(cfg._diagnostics.empty());
+    try testing.expectEqualStrings("GitHub Dark Default", cfg.theme.?.light);
+    try testing.expectEqualStrings("GitHub Dark Default", cfg.theme.?.dark);
+    try testing.expectEqual(@as(f32, 14), cfg.@"font-size");
+    try testing.expectEqual(terminal.CursorStyle.bar, cfg.@"cursor-style");
+
+    // A user config loaded afterwards must win.
+    {
+        var reader: std.Io.Reader = .fixed("font-size = 16\n");
+        try cfg.loadReader(alloc, &reader, "/home/ghostty/.config/ghostty/config");
+    }
+    try testing.expect(cfg._diagnostics.empty());
+    try testing.expectEqual(@as(f32, 16), cfg.@"font-size");
+}
+
 pub const OptionalFileAction = enum { loaded, not_found, @"error" };
 
 /// Load optional configuration file from `path`. All errors are ignored.
@@ -3995,7 +4026,24 @@ fn writeConfigTemplate(path: []const u8) !void {
 ///
 /// The legacy `config` file (without extension) is first loaded,
 /// then `config.ghostty`.
+///
+/// Before any of those, the configuration embedded in the binary
+/// (`config-builtin.ghostty`) is loaded. It is the lowest-priority layer: every
+/// file below is loaded afterwards and therefore overrides it. Because it is
+/// part of this same "default files" step, `config-default-files = false`
+/// discards it along with the user files.
 pub fn loadDefaultFiles(self: *Config, alloc: Allocator) !void {
+    // The builtin configuration is compiled into the binary and is our
+    // lowest-priority layer. This is intentionally loaded before any user
+    // file so anything the user writes overrides it.
+    builtin: {
+        var reader: std.Io.Reader = .fixed(@embedFile("./config-builtin.ghostty"));
+        self.loadReader(alloc, &reader, "/builtin/config") catch |err| {
+            log.warn("error loading builtin config err={}", .{err});
+            break :builtin;
+        };
+    }
+
     // Load XDG first
     const legacy_xdg_path = try file_load.legacyDefaultXdgPath(alloc);
     defer alloc.free(legacy_xdg_path);

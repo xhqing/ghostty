@@ -1,0 +1,20 @@
+# 本文件由 src/config/Config.zig 通过 @embedFile 编进二进制，是配置的最底层默认值
+# （优先级低于所有用户配置文件）。它解决两个问题：换机器 / 重装后默认外观不用手工重建；
+# 默认值不再来自任何能被其它程序顺手改掉的用户目录文件。
+#
+# 修改本文件前请先读 Issue #24 的取舍：
+#   - 只写“与机器无关”的外观项；窗口尺寸 / 位置按屏幕反推，不写；
+#   - 不写任何 keybind：快速终端的 global: 热键可能与本机其它软件冲突，
+#     super+v 粘贴剪贴板图片为文件路径属本分叉的实验性功能，不宜设为所有人的默认。
+#
+# 本文件里的路径必须是绝对路径或纯值（loadReader 以 /builtin/config 为基准展开相对路径）。
+
+theme = GitHub Dark Default
+font-family = Menlo
+font-family = PingFang SC
+font-style = Bold
+font-size = 14
+cursor-style = bar
+adjust-cursor-thickness = 300%
+cursor-color = #00ff00
+shell-integration-features = no-cursor,no-sudo,title,no-ssh-env,no-ssh-terminfo,path
