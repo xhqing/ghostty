@@ -10,6 +10,12 @@
 - **改了什么**：① 新增 `src/config/config-builtin.ghostty`（9 项外观默认值：主题、字体、字号、光标、shell 集成），由 `Config.loadDefaultFiles()` 在最开头用 `@embedFile` 加载——它是优先级最低的一层，任何用户配置文件（XDG / App Support）都在它之后加载、天然覆盖；`config-default-files = false` 时这一层与用户配置一起被丢弃，语义不变。② 内置配置只放与机器无关的值：窗口尺寸 / 位置和所有 `keybind`（快速终端的 `global:` 热键、`super+v` 贴图补丁）继续留给用户配置文件。③ 新增 Zig 单测：内置文件必须能解析、且后加载的用户配置覆盖它。
 - **边界**：① `theme = GitHub Dark Default` 依赖随 App 打包的主题目录（`Contents/Resources/ghostty/themes`，`emit-themes` 默认为 true，无需额外打包）；② 从未创建过配置文件的机器首次启动仍会生成注释模板（原有行为），内置值在模板之上生效。
 
+### 变更（构建产物改用固定自签证书签名，辅助功能授权不再随每次构建失效）
+
+- **为什么改**：本分叉的产物是 ad-hoc 签名，而 macOS TCC 对 ad-hoc 签名的 App 是按签名哈希（cdhash）匹配辅助功能授权的——每次重新构建哈希必变，系统当成「新 App」，之前的授权自动作废（2026-09-22 实测：装上新构建后终端里 `osascript` 直接报 `not allowed to send keystrokes (1002)`，只能 `tccutil reset` + 手工重新授权，Issue #2）。
+- **改了什么**：① `build.yml` 增加证书签名路径：从 secrets 取固定的自签证书（`.p12`）导入一次性 keychain、只对 codesign 策略标记信任、逐个签 Sparkle 的嵌套组件与 App 本体，签完校验签名并打印 designated requirement；构建结束删除 keychain。secrets 不可用时（fork 的 PR）自动回退 ad-hoc，CI 仍能出产物。② 新增 `SIGNING.md` 说明证书用途、secret 名称与「不要随手重建证书」的原因。③ 清理上游遗留的 workflow：`pull_request_target` 的 `vouch-check-pr.yml` / `milestone.yml`、`vouch-*` 系列，以及依赖上游 Namespace runner / Nix / 自有 CDN 与 minisign 的 `release-tag.yml`、`release-tip.yml`、`publish-tag.yml`、`flatpak.yml`、`snap.yml`、`nix.yml`、`test.yml`、`update-colorschemes.yml`——这些在本仓库要么永远跳过、要么只会失败，删掉后仓库只剩 `build.yml` 一条 CI。
+- **边界**：① 自签证书不在 Apple 信任链、也不做公证，Gatekeeper 首次打开仍需手动放行（与 ad-hoc 时相同，非回归）；② 证书一旦投入使用不要重建——换证书等于换签名身份，所有机器要重新授权一轮；③ 本分支的构建即配对测试：`codesign -dv` 应显示证书身份（`Authority=Ghostty Fork Self-Signed`）而不是 `Signature=adhoc`，辅助功能授权跨版本持续在下一个 Release 安装后复测。
+
 ## v1.3.1-paste.4（2026-11-05）
 
 ### 变更（关掉最后一个窗口即退出，Dock 图标不再残留小点）

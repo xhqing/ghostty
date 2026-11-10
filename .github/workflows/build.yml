@@ -7,6 +7,15 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  # 固定自签证书签名（Issue #2）。证书一旦投入使用就不要重建：TCC 的辅助功能
+  # 授权按签名身份匹配，换证书 = 换身份 = 所有机器要重新授权一轮。
+  # 来自 fork 的 PR 拿不到 secrets，此时回退到 ad-hoc 签名，保证 CI 仍能出产物。
+  MACOS_SIGNING_CERTIFICATE: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+  MACOS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+  MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+  MACOS_SIGNING_KEYCHAIN_PASSWORD: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
+
 jobs:
   build-macos:
     runs-on: macos-26
@@ -62,11 +71,78 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GHOSTTY_BUILD" "macos/build/Release/Ghostty.app/Contents/Info.plist"
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.3.1" "macos/build/Release/Ghostty.app/Contents/Info.plist"
 
-      - name: Ad-hoc codesign
+      - name: Import signing certificate
+        if: env.MACOS_SIGNING_CERTIFICATE != ''
+        run: |
+          # base64 的 .p12 还原成文件，导入一次性 keychain
+          echo "$MACOS_SIGNING_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$MACOS_SIGNING_KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$MACOS_SIGNING_KEYCHAIN_PASSWORD" build.keychain
+          security import "$RUNNER_TEMP/certificate.p12" -k build.keychain \
+            -P "$MACOS_SIGNING_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$MACOS_SIGNING_KEYCHAIN_PASSWORD" build.keychain
+
+          # 自签证书不在任何信任链上：不把它标成可信根，codesign 根本找不到这个
+          # 身份（`security find-identity -p codesigning -v` 会是 0 valid identities）。
+          # 这里把信任写进系统域并只限 codesign 策略；runner 是一次性的，用完即销毁。
+          #
+          # 证书本体从 keychain 里取（`find-certificate -p` 输出 PEM），不用 openssl
+          # 解 p12：runner 上的 OpenSSL 3 默认不带 legacy provider，解不开兼容 macOS
+          # 的 p12（RC2-40-CBC）。
+          security find-certificate -c "$MACOS_SIGNING_IDENTITY" -p build.keychain \
+            > "$RUNNER_TEMP/certificate.pem"
+          sudo security add-trusted-cert -d -r trustRoot -p codeSign \
+            -k /Library/Keychains/System.keychain "$RUNNER_TEMP/certificate.pem"
+
+          security find-identity -p codesigning -v build.keychain
+          rm -f "$RUNNER_TEMP/certificate.p12" "$RUNNER_TEMP/certificate.pem"
+
+      - name: Codesign with certificate
+        if: env.MACOS_SIGNING_CERTIFICATE != ''
+        run: |
+          # Sparkle 里嵌套的可执行文件单独签，且不套 App 本体的 entitlements；
+          # 最后再签 App 本体。与上游 release 的签名顺序一致。
+          FRAMEWORK="macos/build/Release/Ghostty.app/Contents/Frameworks/Sparkle.framework"
+          for target in \
+            "$FRAMEWORK/Versions/B/XPCServices/Downloader.xpc" \
+            "$FRAMEWORK/Versions/B/XPCServices/Installer.xpc" \
+            "$FRAMEWORK/Versions/B/Autoupdate" \
+            "$FRAMEWORK/Versions/B/Updater.app" \
+            "$FRAMEWORK" \
+            "macos/build/Release/Ghostty.app/Contents/PlugIns/DockTilePlugin.plugin"; do
+            /usr/bin/codesign --verbose --force --options runtime \
+              --sign "$MACOS_SIGNING_IDENTITY" "$target"
+          done
+
+          /usr/bin/codesign --verbose --force --options runtime \
+            --entitlements macos/Ghostty.entitlements \
+            --sign "$MACOS_SIGNING_IDENTITY" \
+            "macos/build/Release/Ghostty.app"
+
+      - name: Ad-hoc codesign (no signing certificate available)
+        if: env.MACOS_SIGNING_CERTIFICATE == ''
         run: |
           /usr/bin/codesign --verbose --force --deep --sign - \
             --entitlements macos/Ghostty.entitlements \
             "macos/build/Release/Ghostty.app"
+
+      - name: Verify signature
+        run: |
+          /usr/bin/codesign --verify --deep --strict --verbose=2 "macos/build/Release/Ghostty.app"
+          /usr/bin/codesign -dv --verbose=4 "macos/build/Release/Ghostty.app" 2> signature.txt
+          cat signature.txt
+          if [ -n "$MACOS_SIGNING_IDENTITY" ]; then
+            # 证书签名必须能读出证书身份，否则说明签名没生效（又退回 ad-hoc 了）
+            grep -q "Authority=$MACOS_SIGNING_IDENTITY" signature.txt
+
+            # 记下 designated requirement：TCC 的辅助功能授权就是按它匹配的。
+            # 同一张证书签的不同构建，这行必须完全一致，否则授权又会失效。
+            /usr/bin/codesign -d --requirements - "macos/build/Release/Ghostty.app"
+          else
+            grep -q "Signature=adhoc" signature.txt
+          fi
 
       - name: Zip
         run: |
@@ -81,3 +157,8 @@ jobs:
           # 产物只用来「真机验收某个提交」与「发版时取二进制」，留一周足够；
           # 过期由 GitHub 自动回收，不再需要每天跑定时清理工作流。
           retention-days: 7
+
+      - name: Cleanup signing keychain
+        if: always() && env.MACOS_SIGNING_CERTIFICATE != ''
+        run: |
+          security delete-keychain build.keychain || true
