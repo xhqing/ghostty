@@ -87,9 +87,12 @@ jobs:
           # 自签证书不在任何信任链上：不把它标成可信根，codesign 根本找不到这个
           # 身份（`security find-identity -p codesigning -v` 会是 0 valid identities）。
           # 这里把信任写进系统域并只限 codesign 策略；runner 是一次性的，用完即销毁。
-          openssl pkcs12 -in "$RUNNER_TEMP/certificate.p12" -clcerts -nokeys \
-            -passin "pass:$MACOS_SIGNING_CERTIFICATE_PASSWORD" \
-            -out "$RUNNER_TEMP/certificate.pem"
+          #
+          # 证书本体从 keychain 里取（`find-certificate -p` 输出 PEM），不用 openssl
+          # 解 p12：runner 上的 OpenSSL 3 默认不带 legacy provider，解不开兼容 macOS
+          # 的 p12（RC2-40-CBC）。
+          security find-certificate -c "$MACOS_SIGNING_IDENTITY" -p build.keychain \
+            > "$RUNNER_TEMP/certificate.pem"
           sudo security add-trusted-cert -d -r trustRoot -p codeSign \
             -k /Library/Keychains/System.keychain "$RUNNER_TEMP/certificate.pem"
 
