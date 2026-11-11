@@ -2,6 +2,14 @@
 
 本文件记录本仓库的全部变更。仓库已于 2026-09-20 与原上游 `ghostty-org/ghostty` 断开 fork 关系（GitHub `fork: false`），独立分叉自主维护、不自动同步上游；上游自身变更见上游仓库。
 
+## v1.4.0（2026-11-11）
+
+### 变更（版本号规范化：`1.3.1-paste.N` → 标准三段 semver）
+
+- **为什么改**：旧版本号 `1.3.1-paste.6` 里的 `-paste.6` 是 semver 的**预发布段**——按 semver 排序它排在 `1.3.1` **之前**，于是正式发布版在所有按 semver 比较的场合（包管理器、依赖解析、脚本里的版本判断）都被当成「1.3.1 之前的测试版」；第四段的自造计数也读不出版本语义（是功能还是修复）。同时 `build.yml` 把构建版本串与 `CFBundleShortVersionString` 都硬编码成 `1.3.1`，与 tag / Release 的版本脱节，装好之后 App 里显示的版本也对不上。
+- **改了什么**：① `VERSION` 改为 `1.4.0`，此后固定按 semver 递增（新增功能 +minor、修复 +patch、不兼容 +major），不再使用后缀；② `build.yml` 增加「读取 VERSION」步骤，`-Dversion-string` 与 `CFBundleShortVersionString` 都取 `VERSION` 的值，消除硬编码漂移（`CFBundleVersion` 仍用提交数，保持单调递增）；③ 中英 README 的 Version 徽章同步为 `1.4.0`。
+- **语义说明**：`1.4.0` 基于上游 `v1.3.1` 基线，相对 `1.3.1` 新增了内置默认配置与固定自签证书签名，因此落在 minor 位；上一版 `1.3.1-paste.6` 的全部功能内容都已包含在本版内（其 tag 与 Release 保留为历史记录）。
+
 ## v1.3.1-paste.6（2026-11-10）
 
 ### 修复（证书签名的产物无法启动：去掉 hardened runtime 重新发布）
